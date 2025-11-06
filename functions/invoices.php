@@ -318,9 +318,21 @@ function createInvoicesForRoom($roomId, $invoiceMonth, $electricityAmount, $wate
     $students = $data['students'];
     
     // Tính hạn thanh toán (mặc định: cuối tháng sau)
-    if (!$dueDate) {
+    if (empty($dueDate) || $dueDate === null) {
         $nextMonth = date('Y-m-d', strtotime($invoiceMonth . '-01 +1 month'));
         $dueDate = date('Y-m-t', strtotime($nextMonth));
+    } else {
+        // Validate format Y-m-d
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dueDate)) {
+            mysqli_close($conn);
+            return ['success' => false, 'message' => 'Ngày hạn thanh toán không đúng định dạng (YYYY-MM-DD)!'];
+        }
+        // Validate date
+        $dateParts = explode('-', $dueDate);
+        if (!checkdate($dateParts[1], $dateParts[2], $dateParts[0])) {
+            mysqli_close($conn);
+            return ['success' => false, 'message' => 'Ngày hạn thanh toán không hợp lệ!'];
+        }
     }
     
     // Chuyển service_details thành JSON
@@ -393,8 +405,12 @@ function createInvoicesForRoom($roomId, $invoiceMonth, $electricityAmount, $wate
                 throw new Exception('Lỗi chuẩn bị câu lệnh SQL: ' . mysqli_error($conn));
             }
             
-            // Format: iiiisdiidddddddddddsdsdi (24 ký tự)
-            mysqli_stmt_bind_param($stmt, "iiiisdiidddddddddddsdsdi",
+            // Format: iiiissdiidddddddddddsdsdi (25 ký tự cho 24 tham số - invoiceMonth là string)
+            // i=integer, s=string, d=double
+            // 1-3: studentId, contractId, roomId (i)
+            // 4-5: invoiceCode, invoiceMonth (s)
+            // 6-24: các giá trị số và dueDate (d/i/s)
+            mysqli_stmt_bind_param($stmt, "iiiissdiidddddddddddsdsdi",
                 $studentId, $contractId, $roomId, $invoiceCode, $invoiceMonth,
                 $data['room_total_fee'], $data['occupancy_count'], $data['room_fee_per_person'],
                 $data['electricity_total_room'], $data['electricity_amount_per_person'], $data['electricity_amount'], $data['electricity_unit_price'],

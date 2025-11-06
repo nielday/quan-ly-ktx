@@ -78,20 +78,23 @@ function handleCreateInvoice() {
     }
     
     // Nếu không có due_date, để null để tự động tính
-    if (empty($dueDate)) {
+    // Input type="date" trả về format YYYY-MM-DD hoặc chuỗi rỗng
+    if (empty($dueDate) || trim($dueDate) === '') {
         $dueDate = null;
     } else {
-        // Chuyển đổi định dạng từ d/m/Y sang Y-m-d
-        $dateParts = explode('/', $dueDate);
-        if (count($dateParts) === 3) {
-            $dueDate = $dateParts[2] . '-' . $dateParts[1] . '-' . $dateParts[0];
-        } else {
-            // Nếu đã là Y-m-d thì giữ nguyên
-            if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dueDate)) {
-                $_SESSION['error'] = 'Ngày hạn thanh toán không đúng định dạng!';
-                header('Location: ../views/manager/invoices/create_invoice.php');
-                exit;
-            }
+        // Validate format Y-m-d
+        $dueDate = trim($dueDate);
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dueDate)) {
+            $_SESSION['error'] = 'Ngày hạn thanh toán không đúng định dạng (YYYY-MM-DD)!';
+            header('Location: ../views/manager/invoices/create_invoice.php');
+            exit;
+        }
+        // Validate date hợp lệ
+        $dateParts = explode('-', $dueDate);
+        if (count($dateParts) !== 3 || !checkdate($dateParts[1], $dateParts[2], $dateParts[0])) {
+            $_SESSION['error'] = 'Ngày hạn thanh toán không hợp lệ!';
+            header('Location: ../views/manager/invoices/create_invoice.php');
+            exit;
         }
     }
     
