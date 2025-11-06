@@ -17,10 +17,32 @@ $successMsg = getSuccessMessage();
 $errorMsg = getErrorMessage();
 
 // Lấy danh sách phòng có người ở (để tạo hóa đơn)
-$allRooms = getAllRooms();
-$occupiedRooms = array_filter($allRooms, function($room) {
-    return $room['status'] === 'occupied' && $room['current_occupancy'] > 0;
-});
+// Lấy phòng có room_assignments active (có người đang ở)
+require_once __DIR__ . '/../../../functions/room_assignments.php';
+require_once __DIR__ . '/../../../functions/db_connection.php';
+
+$conn = getDbConnection();
+$sql = "SELECT DISTINCT r.*, b.building_name, b.building_code,
+               COUNT(DISTINCT ra.id) as active_students
+        FROM rooms r
+        LEFT JOIN buildings b ON r.building_id = b.id
+        INNER JOIN room_assignments ra ON r.id = ra.room_id
+        WHERE ra.status = 'active' 
+        AND ra.end_date IS NULL
+        GROUP BY r.id
+        HAVING active_students > 0
+        ORDER BY b.building_code ASC, r.room_number ASC";
+
+$result = mysqli_query($conn, $sql);
+$occupiedRooms = [];
+
+if ($result && mysqli_num_rows($result) > 0) {
+    while ($row = mysqli_fetch_assoc($result)) {
+        $occupiedRooms[] = $row;
+    }
+}
+
+mysqli_close($conn);
 
 // Tháng hiện tại mặc định
 $defaultMonth = date('Y-m');
@@ -99,7 +121,8 @@ $defaultMonth = date('Y-m');
                                                 echo escapeHtml($room['building_code'] . ' - ');
                                             }
                                             echo escapeHtml($room['room_code'] . ' (' . $room['room_type'] . ')');
-                                            echo ' - ' . $room['current_occupancy'] . '/' . $room['capacity'] . ' người';
+                                            $activeCount = $room['active_students'] ?? $room['current_occupancy'] ?? 0;
+                                            echo ' - ' . $activeCount . '/' . $room['capacity'] . ' người';
                                             ?>
                                         </option>
                                     <?php endforeach; ?>
