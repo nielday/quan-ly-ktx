@@ -149,7 +149,7 @@ require_once __DIR__ . '/../../functions/helpers.php';
                     <div class="card-body">
                         <h5 class="card-title"><i class="bi bi-cash-coin me-2"></i>Thanh toán</h5>
                         <p class="card-text">Xác nhận thanh toán</p>
-                        <a href="#" class="btn btn-light btn-sm">Xem chi tiết</a>
+                        <a href="payments.php" class="btn btn-light btn-sm">Xem chi tiết</a>
                     </div>
                 </div>
             </div>
