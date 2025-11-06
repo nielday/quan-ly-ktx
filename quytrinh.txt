@@ -1,0 +1,42 @@
+QUY TRÌNH ĐẶT PHÒNG KTX (Đơn giản cho Local Development)
+
+0. Manager mở đợt đăng ký
+   ├─ Tạo đợt đăng ký mới (Registration Period)
+   ├─ Thiết lập thời gian bắt đầu (start_date)
+   ├─ Thiết lập thời gian kết thúc (end_date)
+   ├─ Học kỳ, năm học
+   ├─ Số lượng phòng có sẵn (nếu cần)
+   └─ Status: "open" (đang mở)
+
+1. Sinh viên đăng ký tài khoản
+2. Sinh viên đăng nhập
+3. Sinh viên điền form đăng ký ở KTX
+   ├─ Kiểm tra: Đợt đăng ký đang mở? (trong khoảng start_date và end_date)
+   ├─ Học kỳ, năm học
+   ├─ Loại phòng mong muốn (đơn, đôi, 4 người, 6 người)
+   └─ Kiểm tra điều kiện (đã có phòng? đã có hợp đồng active?)
+4. Gửi đơn đăng ký → Lưu vào Applications (status = "pending", registration_period_id)
+5. Manager xem danh sách đơn đăng ký
+6. Manager duyệt/từ chối đơn
+   ├─ Kiểm tra phòng trống
+   │   ├─ CÓ phòng → Duyệt (status = "approved")
+   │   └─ HẾT phòng → Chuyển vào danh sách chờ (status = "waiting_list")
+   └─ Nếu từ chối → Ghi lý do (status = "rejected")
+7. Nếu đơn được duyệt:
+   ├─ Yêu cầu nộp tiền cọc (ghi chú thủ công)
+   ├─ Sinh viên xác nhận đã nộp cọc
+   ├─ Manager xác nhận đã nhận cọc
+   ├─ Manager phân phòng (chọn phòng phù hợp)
+   │   └─ Tạo Room_Assignment
+   ├─ Manager tạo hợp đồng (ghi chú thủ công)
+   │   └─ Tạo Contract với deposit đã nộp
+   └─ Sinh viên xem thông tin phòng và hợp đồng
+8. Nếu đơn bị từ chối:
+   └─ Sinh viên xem lý do từ chối
+
+GHI CHÚ:
+- Không có điểm ưu tiên (Manager tự quyết định)
+- Không upload giấy tờ (đơn giản hóa)
+- Không hợp đồng điện tử/ký số (ghi chú thủ công)
+- Không thông báo tự động (không có email)
+- Thanh toán cọc: ghi chú thủ công
