@@ -98,7 +98,7 @@ $pendingCount = count(array_filter($pendingApplications, function($app) {
                     <div class="card-body">
                         <h5 class="card-title"><i class="bi bi-house-door me-2"></i>Thông tin Phòng</h5>
                         <p class="card-text">Xem thông tin phòng đang ở</p>
-                        <a href="#" class="btn btn-light btn-sm">Xem chi tiết</a>
+                        <a href="room.php" class="btn btn-light btn-sm">Xem chi tiết</a>
                     </div>
                 </div>
             </div>
@@ -107,16 +107,16 @@ $pendingCount = count(array_filter($pendingApplications, function($app) {
                     <div class="card-body">
                         <h5 class="card-title"><i class="bi bi-receipt me-2"></i>Hóa đơn</h5>
                         <p class="card-text">Xem và thanh toán hóa đơn</p>
-                        <a href="#" class="btn btn-light btn-sm">Xem chi tiết</a>
+                        <a href="invoices.php" class="btn btn-light btn-sm">Xem chi tiết</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-3 mb-3">
                 <div class="card text-white bg-secondary">
                     <div class="card-body">
-                        <h5 class="card-title"><i class="bi bi-gear me-2"></i>Dịch vụ Phòng</h5>
-                        <p class="card-text">Xem dịch vụ của phòng</p>
-                        <a href="#" class="btn btn-light btn-sm">Xem chi tiết</a>
+                        <h5 class="card-title"><i class="bi bi-cash-coin me-2"></i>Thanh toán</h5>
+                        <p class="card-text">Lịch sử thanh toán</p>
+                        <a href="payments/history.php" class="btn btn-light btn-sm">Xem chi tiết</a>
                     </div>
                 </div>
             </div>
@@ -128,7 +128,7 @@ $pendingCount = count(array_filter($pendingApplications, function($app) {
                     <div class="card-body">
                         <h5 class="card-title"><i class="bi bi-arrow-left-right me-2"></i>Yêu cầu Chuyển phòng</h5>
                         <p class="card-text">Gửi yêu cầu chuyển phòng</p>
-                        <a href="#" class="btn btn-light btn-sm">Xem chi tiết</a>
+                        <a href="room_transfers.php" class="btn btn-light btn-sm">Xem chi tiết</a>
                     </div>
                 </div>
             </div>
@@ -137,7 +137,7 @@ $pendingCount = count(array_filter($pendingApplications, function($app) {
                     <div class="card-body">
                         <h5 class="card-title"><i class="bi bi-tools me-2"></i>Yêu cầu Sửa chữa</h5>
                         <p class="card-text">Báo hỏng hóc, yêu cầu sửa</p>
-                        <a href="#" class="btn btn-light btn-sm">Xem chi tiết</a>
+                        <a href="maintenance.php" class="btn btn-light btn-sm">Xem chi tiết</a>
                     </div>
                 </div>
             </div>

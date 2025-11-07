@@ -387,8 +387,8 @@ function createInvoicesForRoom($roomId, $invoiceMonth, $electricityAmount, $wate
             $invoiceCode = $prefix . str_pad($baseCount + $invoiceCounter, 4, '0', STR_PAD_LEFT);
             
             // Insert hóa đơn
-            // Đếm: 24 tham số
-            // i i i i s d i d d d d d d d d d d d d s d d d s i
+            // Đếm: 24 tham số (23 dấu ? trong VALUES vì status='pending' cố định)
+            // i i i s s d i d d d d d d d d d d d s d d d s i
             // 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
             $sql = "INSERT INTO invoices (
                         student_id, contract_id, room_id, invoice_code, invoice_month,
@@ -405,12 +405,18 @@ function createInvoicesForRoom($roomId, $invoiceMonth, $electricityAmount, $wate
                 throw new Exception('Lỗi chuẩn bị câu lệnh SQL: ' . mysqli_error($conn));
             }
             
-            // Format: iiiissdiidddddddddddsdsdi (25 ký tự cho 24 tham số - invoiceMonth là string)
+            // Format: iiissdidddddddddddsdddsi (24 ký tự cho 24 tham số)
             // i=integer, s=string, d=double
-            // 1-3: studentId, contractId, roomId (i)
-            // 4-5: invoiceCode, invoiceMonth (s)
-            // 6-24: các giá trị số và dueDate (d/i/s)
-            mysqli_stmt_bind_param($stmt, "iiiissdiidddddddddddsdsdi",
+            // 1-3: studentId(i), contractId(i), roomId(i)
+            // 4-5: invoiceCode(s), invoiceMonth(s)
+            // 6-7: room_total_fee(d), occupancy_count(i)
+            // 8-18: room_fee(d), elec_total(d), elec_per_person(d), elec_amount(d), elec_unit(d), 
+            //       water_total(d), water_per_person(d), water_amount(d), water_unit(d), 
+            //       service_total(d), service_per_person(d)
+            // 19: serviceDetailsJson(s)
+            // 20-22: violationFee(d), subtotal(d), totalAmount(d)
+            // 23-24: dueDate(s), createdBy(i)
+            mysqli_stmt_bind_param($stmt, "iiissdidddddddddddsdddsi",
                 $studentId, $contractId, $roomId, $invoiceCode, $invoiceMonth,
                 $data['room_total_fee'], $data['occupancy_count'], $data['room_fee_per_person'],
                 $data['electricity_total_room'], $data['electricity_amount_per_person'], $data['electricity_amount'], $data['electricity_unit_price'],

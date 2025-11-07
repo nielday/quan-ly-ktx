@@ -48,7 +48,7 @@ $errorMsg = getErrorMessage();
                     <i class="bi bi-person-circle me-1"></i>
                     <?php echo escapeHtml($currentUser['full_name'] ?? $currentUser['username']); ?>
                 </span>
-                <a class="btn btn-outline-light btn-sm" href="../../../../handle/logout_process.php">
+                <a class="btn btn-outline-light btn-sm" href="../../../handle/logout_process.php">
                     <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
                 </a>
             </div>
@@ -85,7 +85,7 @@ $errorMsg = getErrorMessage();
                                 <small>Thời gian: <?php echo formatDate($openPeriod['start_date']); ?> - <?php echo formatDate($openPeriod['end_date']); ?></small>
                             </div>
                             
-                            <form method="POST" action="../../../../handle/applications_process.php">
+                            <form method="POST" action="../../../handle/applications_process.php">
                                 <input type="hidden" name="action" value="create">
                                 <input type="hidden" name="registration_period_id" value="<?php echo $openPeriod['id']; ?>">
                                 

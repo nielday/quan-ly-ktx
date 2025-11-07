@@ -48,7 +48,7 @@ $errorMsg = getErrorMessage();
                     <i class="bi bi-person-circle me-1"></i>
                     <?php echo escapeHtml($currentUser['full_name'] ?? $currentUser['username']); ?>
                 </span>
-                <a class="btn btn-outline-light btn-sm" href="../../../../handle/logout_process.php">
+                <a class="btn btn-outline-light btn-sm" href="../../../handle/logout_process.php">
                     <i class="bi bi-box-arrow-right me-1"></i>Đăng xuất
                 </a>
             </div>

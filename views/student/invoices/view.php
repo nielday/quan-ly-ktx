@@ -1,21 +1,32 @@
 <?php
 /**
- * Chi tiết hóa đơn - Manager
+ * Chi tiết hóa đơn - Student
+ * Xem chi tiết hóa đơn và nộp tiền
  */
 
 require_once __DIR__ . '/../../../functions/auth.php';
 require_once __DIR__ . '/../../../functions/helpers.php';
+require_once __DIR__ . '/../../../functions/students.php';
 require_once __DIR__ . '/../../../functions/invoices.php';
 
-// Kiểm tra đăng nhập và quyền manager
-checkRole('manager');
+// Kiểm tra đăng nhập và quyền student
+checkRole('student');
 
 $currentUser = getCurrentUser();
+$student = getStudentByUserId($currentUser['id']);
+
+if (!$student) {
+    setErrorMessage("Không tìm thấy thông tin sinh viên");
+    redirect('../dashboard.php');
+    exit;
+}
+
 $invoiceId = intval($_GET['id'] ?? 0);
 
 if ($invoiceId <= 0) {
     setErrorMessage('ID hóa đơn không hợp lệ!');
     redirect('../invoices.php');
+    exit;
 }
 
 $invoice = getInvoiceById($invoiceId);
@@ -23,11 +34,15 @@ $invoice = getInvoiceById($invoiceId);
 if (!$invoice) {
     setErrorMessage('Hóa đơn không tồn tại!');
     redirect('../invoices.php');
+    exit;
 }
 
-$statuses = getInvoiceStatuses();
-$successMsg = getSuccessMessage();
-$errorMsg = getErrorMessage();
+// Kiểm tra hóa đơn thuộc về sinh viên này
+if ($invoice['student_id'] != $student['id']) {
+    setErrorMessage('Bạn không có quyền xem hóa đơn này!');
+    redirect('../invoices.php');
+    exit;
+}
 
 // Parse service_details
 $serviceDetails = [];
@@ -37,13 +52,23 @@ if (!empty($invoice['service_details'])) {
         $serviceDetails = [];
     }
 }
+
+$statuses = [
+    'pending' => 'Chưa thanh toán',
+    'paid' => 'Đã thanh toán',
+    'overdue' => 'Quá hạn',
+    'cancelled' => 'Đã hủy'
+];
+
+$successMsg = getSuccessMessage();
+$errorMsg = getErrorMessage();
 ?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi tiết Hóa đơn - Quản lý KTX</title>
+    <title>Chi tiết Hóa đơn - Sinh viên</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
@@ -57,23 +82,17 @@ if (!empty($invoice['service_details'])) {
         .invoice-detail-card {
             border-left: 4px solid #667eea;
         }
-        .amount-box {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 5px;
-            border: 2px solid #dee2e6;
-        }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-info">
         <div class="container-fluid">
             <a class="navbar-brand" href="../dashboard.php">
-                <i class="bi bi-building me-2"></i>Quản lý KTX
+                <i class="bi bi-building me-2"></i>Quản lý KTX - Sinh viên
             </a>
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="../dashboard.php">Dashboard</a>
-                <a class="nav-link" href="../invoices.php">Hóa đơn</a>
+                <a class="nav-link active" href="../invoices.php">Hóa đơn</a>
                 <span class="navbar-text me-3">
                     <i class="bi bi-person-circle me-1"></i>
                     <?php echo escapeHtml($currentUser['full_name'] ?? $currentUser['username']); ?>
@@ -113,8 +132,13 @@ if (!empty($invoice['service_details'])) {
                 <div class="col-md-6">
                     <h3 class="mb-3">HÓA ĐƠN THANH TOÁN</h3>
                     <p class="mb-1"><strong>Mã hóa đơn:</strong> <?php echo escapeHtml($invoice['invoice_code']); ?></p>
-                    <p class="mb-1"><strong>Tháng:</strong> <?php echo escapeHtml($invoice['invoice_month']); ?></p>
-                    <p class="mb-0"><strong>Ngày tạo:</strong> <?php echo formatDateTime($invoice['created_at']); ?></p>
+                    <p class="mb-1"><strong>Tháng:</strong> 
+                        <?php 
+                        $date = DateTime::createFromFormat('Y-m', $invoice['invoice_month']);
+                        echo $date ? $date->format('m/Y') : $invoice['invoice_month'];
+                        ?>
+                    </p>
+                    <p class="mb-0"><strong>Ngày tạo:</strong> <?php echo date('d/m/Y H:i', strtotime($invoice['created_at'])); ?></p>
                 </div>
                 <div class="col-md-6 text-md-end">
                     <?php
@@ -135,25 +159,7 @@ if (!empty($invoice['service_details'])) {
         </div>
 
         <div class="row">
-            <!-- Thông tin sinh viên và phòng -->
-            <div class="col-md-6 mb-4">
-                <div class="card invoice-detail-card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="bi bi-person me-2"></i>Thông tin Sinh viên</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="mb-2"><strong>Họ tên:</strong> <?php echo escapeHtml($invoice['student_name']); ?></p>
-                        <p class="mb-2"><strong>Mã sinh viên:</strong> <?php echo escapeHtml($invoice['student_code']); ?></p>
-                        <?php if ($invoice['phone']): ?>
-                            <p class="mb-2"><strong>Điện thoại:</strong> <?php echo escapeHtml($invoice['phone']); ?></p>
-                        <?php endif; ?>
-                        <?php if ($invoice['email']): ?>
-                            <p class="mb-0"><strong>Email:</strong> <?php echo escapeHtml($invoice['email']); ?></p>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-            
+            <!-- Thông tin phòng -->
             <div class="col-md-6 mb-4">
                 <div class="card invoice-detail-card">
                     <div class="card-header bg-success text-white">
@@ -170,6 +176,29 @@ if (!empty($invoice['service_details'])) {
                         </p>
                         <p class="mb-2"><strong>Loại phòng:</strong> <?php echo escapeHtml($invoice['room_type']); ?></p>
                         <p class="mb-0"><strong>Số người trong phòng:</strong> <?php echo $invoice['room_occupancy_count']; ?> người</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card invoice-detail-card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-calendar me-2"></i>Thông tin Thanh toán</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2"><strong>Hạn thanh toán:</strong> 
+                            <span class="<?php echo ($invoice['status'] === 'overdue') ? 'text-danger' : ''; ?>">
+                                <?php echo date('d/m/Y', strtotime($invoice['due_date'])); ?>
+                            </span>
+                        </p>
+                        <?php if ($invoice['status'] === 'paid' && $invoice['paid_at']): ?>
+                            <p class="mb-2"><strong>Ngày thanh toán:</strong> <?php echo date('d/m/Y H:i', strtotime($invoice['paid_at'])); ?></p>
+                        <?php endif; ?>
+                        <p class="mb-0"><strong>Tổng tiền:</strong> 
+                            <span class="fs-5 text-danger">
+                                <?php echo number_format($invoice['total_amount'], 0, ',', '.'); ?> VNĐ
+                            </span>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -292,82 +321,28 @@ if (!empty($invoice['service_details'])) {
             </div>
         </div>
 
-        <!-- Thông tin thanh toán -->
-        <div class="row">
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-calendar me-2"></i>Thông tin Thanh toán</h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="mb-2"><strong>Hạn thanh toán:</strong> 
-                            <span class="text-danger"><?php echo formatDate($invoice['due_date']); ?></span>
-                        </p>
-                        <?php if ($invoice['paid_at']): ?>
-                            <p class="mb-2"><strong>Ngày thanh toán:</strong> <?php echo formatDateTime($invoice['paid_at']); ?></p>
-                        <?php endif; ?>
-                        <p class="mb-0"><strong>Người tạo:</strong> <?php echo escapeHtml($invoice['created_by_name'] ?? 'N/A'); ?></p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-file-text me-2"></i>Ghi chú</h5>
-                    </div>
-                    <div class="card-body">
-                        <?php if ($invoice['notes']): ?>
-                            <p class="mb-0"><?php echo nl2br(escapeHtml($invoice['notes'])); ?></p>
-                        <?php else: ?>
-                            <p class="text-muted mb-0">Không có ghi chú</p>
-                        <?php endif; ?>
-                    </div>
-                </div>
+        <!-- Nút thanh toán -->
+        <?php if ($invoice['status'] === 'pending' || $invoice['status'] === 'overdue'): ?>
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h5 class="mb-3">Thanh toán hóa đơn này</h5>
+                <p class="text-muted mb-4">Sau khi nộp tiền, vui lòng chờ quản lý xác nhận thanh toán.</p>
+                <a href="../payments/create.php?invoice_id=<?php echo $invoice['id']; ?>" 
+                   class="btn btn-success btn-lg">
+                    <i class="bi bi-cash-coin me-2"></i>Nộp tiền
+                </a>
             </div>
         </div>
-
-        <!-- Thao tác -->
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex gap-2">
-                    <a href="../invoices.php" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left me-2"></i>Quay lại
-                    </a>
-                    <?php if ($invoice['status'] !== 'paid'): ?>
-                        <button type="button" class="btn btn-success" 
-                                onclick="updateStatus(<?php echo $invoice['id']; ?>, 'paid')">
-                            <i class="bi bi-check-circle me-2"></i>Đánh dấu đã thanh toán
-                        </button>
-                        <a href="../../../handle/invoices_process.php?action=delete&id=<?php echo $invoice['id']; ?>" 
-                           class="btn btn-danger" 
-                           onclick="return confirm('Bạn có chắc chắn muốn xóa hóa đơn này?')">
-                            <i class="bi bi-trash me-2"></i>Xóa hóa đơn
-                        </a>
-                    <?php endif; ?>
-                </div>
-            </div>
+        <?php elseif ($invoice['status'] === 'paid'): ?>
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>Hóa đơn đã được thanh toán!</strong> 
+            Ngày thanh toán: <?php echo date('d/m/Y H:i', strtotime($invoice['paid_at'])); ?>
         </div>
+        <?php endif; ?>
     </div>
 
-    <!-- Form ẩn để cập nhật status -->
-    <form id="updateStatusForm" method="POST" action="../../../handle/invoices_process.php" style="display: none;">
-        <input type="hidden" name="action" value="update_status">
-        <input type="hidden" name="invoice_id" id="updateInvoiceId">
-        <input type="hidden" name="status" id="updateStatus">
-        <input type="hidden" name="redirect_url" value="<?php echo $_SERVER['REQUEST_URI']; ?>">
-    </form>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function updateStatus(invoiceId, status) {
-            if (confirm('Bạn có chắc chắn muốn cập nhật trạng thái hóa đơn này?')) {
-                document.getElementById('updateInvoiceId').value = invoiceId;
-                document.getElementById('updateStatus').value = status;
-                document.getElementById('updateStatusForm').submit();
-            }
-        }
-    </script>
 </body>
 </html>
 

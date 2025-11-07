@@ -103,7 +103,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
                         </div>
                     <?php endif; ?>
                     
-                    <form action="./handle/login_process.php" method="POST">
+                    <form action="./handle/login_process.php" method="POST" autocomplete="on">
                         <!-- Username input -->
                         <div class="mb-3">
                             <label for="username" class="form-label">
@@ -115,6 +115,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
                                 id="username" 
                                 class="form-control form-control-lg" 
                                 placeholder="Nhập username" 
+                                autocomplete="username"
                                 required 
                                 autofocus
                             />
@@ -131,6 +132,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role'])) {
                                 id="password" 
                                 class="form-control form-control-lg" 
                                 placeholder="Nhập mật khẩu" 
+                                autocomplete="current-password"
                                 required
                             />
                         </div>
