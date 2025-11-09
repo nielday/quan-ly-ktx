@@ -136,6 +136,10 @@ foreach ($priceTypes as $priceType => $typeName) {
                                                     ?>
                                                 </td>
                                                 <td class="text-center align-middle">
+                                                    <a href="pricing/edit.php?id=<?php echo $item['id']; ?>" 
+                                                       class="btn btn-sm btn-warning me-1" title="Sửa">
+                                                        <i class="bi bi-pencil me-1"></i>Sửa
+                                                    </a>
                                                     <a href="pricing/history.php?type=<?php echo urlencode($priceType); ?>" 
                                                        class="btn btn-sm btn-info" title="Xem lịch sử">
                                                         <i class="bi bi-clock-history me-1"></i>Lịch sử

@@ -138,7 +138,11 @@ function handleCreatePayment() {
         $paymentMethod = 'cash';
     }
     
-    $result = createInvoicePayment($invoiceId, $studentId, $amount, $paymentDate, $paymentMethod, $transactionCode, $notes);
+    // Nếu là sinh viên, tự động xác nhận (autoConfirm = true)
+    // Nếu là manager, chờ xác nhận thủ công (autoConfirm = false)
+    $autoConfirm = ($currentUser['role'] === 'student');
+    
+    $result = createInvoicePayment($invoiceId, $studentId, $amount, $paymentDate, $paymentMethod, $transactionCode, $notes, $autoConfirm);
     
     if ($result['success']) {
         setSuccessMessage($result['message']);

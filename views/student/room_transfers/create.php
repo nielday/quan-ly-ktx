@@ -36,9 +36,14 @@ $currentRoom = $roomInfo['room'];
 // Lấy danh sách phòng trống (available)
 $availableRooms = getAllRooms(null, 'available');
 
-// Lọc bỏ phòng hiện tại
+// Lọc bỏ phòng hiện tại VÀ chỉ lấy phòng còn chỗ trống (current_occupancy < capacity)
 $availableRooms = array_filter($availableRooms, function($room) use ($currentRoom) {
-    return $room['id'] != $currentRoom['id'];
+    // Bỏ phòng hiện tại
+    if ($room['id'] == $currentRoom['id']) {
+        return false;
+    }
+    // Chỉ lấy phòng còn chỗ trống
+    return intval($room['current_occupancy']) < intval($room['capacity']);
 });
 $availableRooms = array_values($availableRooms);
 

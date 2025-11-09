@@ -174,21 +174,27 @@ $errorMsg = getErrorMessage();
                             
                             <div class="mb-3">
                                 <label class="form-label">Số tiền nộp <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <input type="number" 
-                                           class="form-control" 
-                                           name="amount" 
-                                           id="amount"
-                                           value="<?php echo $invoice['total_amount']; ?>"
-                                           min="1" 
-                                           max="<?php echo $invoice['total_amount'] * 2; ?>"
-                                           step="1000"
-                                           required>
-                                    <span class="input-group-text">VNĐ</span>
+                                <div class="alert alert-success mb-2" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <small class="text-white-50 d-block mb-1">Số tiền cần thanh toán</small>
+                                            <h3 class="text-white mb-0 fw-bold">
+                                                <i class="bi bi-cash-coin me-2"></i>
+                                                <?php echo number_format($invoice['total_amount'], 0, ',', '.'); ?> VNĐ
+                                            </h3>
+                                        </div>
+                                        <div class="text-white" style="font-size: 2.5rem;">
+                                            <i class="bi bi-check-circle-fill"></i>
+                                        </div>
+                                    </div>
                                 </div>
+                                <input type="hidden" 
+                                       name="amount" 
+                                       id="amount"
+                                       value="<?php echo $invoice['total_amount']; ?>">
                                 <small class="text-muted">
-                                    Tổng tiền hóa đơn: 
-                                    <strong><?php echo number_format($invoice['total_amount'], 0, ',', '.'); ?> VNĐ</strong>
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Số tiền được tự động tính theo tổng tiền hóa đơn, không cần nhập thủ công
                                 </small>
                             </div>
 
@@ -205,14 +211,44 @@ $errorMsg = getErrorMessage();
 
                             <div class="mb-3">
                                 <label class="form-label">Phương thức thanh toán <span class="text-danger">*</span></label>
-                                <select name="payment_method" class="form-select" required>
+                                <select name="payment_method" class="form-select" id="paymentMethod" required>
                                     <option value="cash" selected>Tiền mặt</option>
                                     <option value="bank_transfer">Chuyển khoản</option>
                                 </select>
                             </div>
 
+                            <!-- QR Code ngân hàng - Hiển thị khi chọn chuyển khoản -->
+                            <div class="mb-3" id="qrCodeSection" style="display: none;">
+                                <label class="form-label mb-3">
+                                    <i class="bi bi-qr-code me-2"></i>Quét mã QR để chuyển khoản
+                                </label>
+                                <div class="card border-primary shadow">
+                                    <div class="card-body text-center p-4">
+                                        <div class="d-flex justify-content-center mb-3">
+                                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);">
+                                                <img src="../../../image/<?php echo rawurlencode('Screenshot 2025-10-28 143029.png'); ?>" 
+                                                     alt="QR Code Ngân hàng" 
+                                                     class="img-fluid" 
+                                                     style="max-width: 250px; border: 4px solid white; border-radius: 12px; background: white; padding: 8px; display: block;">
+                                            </div>
+                                        </div>
+                                        <div class="alert alert-info mb-2">
+                                            <i class="bi bi-info-circle me-2"></i>
+                                            <strong>Hướng dẫn:</strong>
+                                            <ul class="mb-0 text-start" style="font-size: 0.9rem;">
+                                                <li>Mở ứng dụng ngân hàng trên điện thoại</li>
+                                                <li>Chọn tính năng "Quét QR"</li>
+                                                <li>Quét mã QR ở trên</li>
+                                                <li>Kiểm tra thông tin và xác nhận chuyển khoản</li>
+                                                <li>Nhập mã giao dịch bên dưới sau khi chuyển khoản thành công</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="mb-3" id="transactionCodeGroup" style="display: none;">
-                                <label class="form-label">Mã giao dịch</label>
+                                <label class="form-label">Mã giao dịch <span class="text-danger">*</span></label>
                                 <input type="text" 
                                        class="form-control" 
                                        name="transaction_code" 
@@ -228,10 +264,10 @@ $errorMsg = getErrorMessage();
                                           placeholder="Ghi chú thêm (nếu có)"></textarea>
                             </div>
 
-                            <div class="alert alert-info">
-                                <i class="bi bi-info-circle me-2"></i>
-                                <strong>Lưu ý:</strong> Sau khi nộp tiền, vui lòng chờ quản lý xác nhận. 
-                                Trạng thái hóa đơn sẽ được cập nhật sau khi quản lý xác nhận.
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle me-2"></i>
+                                <strong>Thông báo:</strong> Sau khi nộp tiền, hệ thống sẽ tự động cập nhật trạng thái hóa đơn. 
+                                Không cần chờ quản lý xác nhận.
                             </div>
 
                             <div class="d-grid gap-2">
@@ -251,24 +287,19 @@ $errorMsg = getErrorMessage();
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Hiển thị/ẩn trường mã giao dịch khi chọn phương thức
-        document.querySelector('select[name="payment_method"]').addEventListener('change', function() {
+        // Hiển thị/ẩn trường mã giao dịch và QR code khi chọn phương thức
+        document.getElementById('paymentMethod').addEventListener('change', function() {
             const transactionCodeGroup = document.getElementById('transactionCodeGroup');
+            const qrCodeSection = document.getElementById('qrCodeSection');
+            
             if (this.value === 'bank_transfer') {
                 transactionCodeGroup.style.display = 'block';
+                qrCodeSection.style.display = 'block';
                 transactionCodeGroup.querySelector('input').setAttribute('required', 'required');
             } else {
                 transactionCodeGroup.style.display = 'none';
+                qrCodeSection.style.display = 'none';
                 transactionCodeGroup.querySelector('input').removeAttribute('required');
-            }
-        });
-
-        // Format số tiền khi nhập
-        document.getElementById('amount').addEventListener('input', function() {
-            const value = parseFloat(this.value);
-            const max = parseFloat(this.getAttribute('max'));
-            if (value > max) {
-                this.value = max;
             }
         });
 
@@ -277,14 +308,7 @@ $errorMsg = getErrorMessage();
             const amount = parseFloat(document.getElementById('amount').value);
             const totalAmount = <?php echo $invoice['total_amount']; ?>;
             
-            if (amount < totalAmount) {
-                if (!confirm('Bạn đang nộp ít hơn số tiền hóa đơn. Bạn có chắc chắn muốn tiếp tục?')) {
-                    e.preventDefault();
-                    return false;
-                }
-            }
-            
-            if (!confirm('Xác nhận nộp tiền cho hóa đơn này?')) {
+            if (!confirm('Xác nhận nộp tiền ' + amount.toLocaleString('vi-VN') + ' VNĐ cho hóa đơn này?')) {
                 e.preventDefault();
                 return false;
             }

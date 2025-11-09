@@ -384,9 +384,10 @@ function getPaymentById($id) {
  * @param string $paymentMethod Phương thức thanh toán (cash, bank_transfer)
  * @param string|null $transactionCode Mã giao dịch (tùy chọn)
  * @param string|null $notes Ghi chú
+ * @param bool $autoConfirm Tự động xác nhận (true = tự động, false = chờ manager xác nhận)
  * @return array ['success' => bool, 'message' => string, 'id' => int|null]
  */
-function createInvoicePayment($invoiceId, $studentId, $amount, $paymentDate, $paymentMethod = 'cash', $transactionCode = null, $notes = null) {
+function createInvoicePayment($invoiceId, $studentId, $amount, $paymentDate, $paymentMethod = 'cash', $transactionCode = null, $notes = null, $autoConfirm = true) {
     $conn = getDbConnection();
     
     // Validation
@@ -419,52 +420,125 @@ function createInvoicePayment($invoiceId, $studentId, $amount, $paymentDate, $pa
         return ['success' => false, 'message' => 'Hóa đơn không thuộc về sinh viên này!'];
     }
     
+    // Kiểm tra hóa đơn đã được thanh toán chưa
+    if ($invoice['status'] === 'paid') {
+        mysqli_close($conn);
+        return ['success' => false, 'message' => 'Hóa đơn này đã được thanh toán rồi!'];
+    }
+    
     // Validate payment_method
     if (!in_array($paymentMethod, ['cash', 'bank_transfer'])) {
         $paymentMethod = 'cash';
     }
     
-    // Tạo mã thanh toán
-    $paymentCode = generatePaymentCode('invoice_payment');
+    // Bắt đầu transaction
+    mysqli_begin_transaction($conn);
     
-    // Escape các giá trị
-    $paymentCodeEscaped = mysqli_real_escape_string($conn, $paymentCode);
-    $paymentDateEscaped = mysqli_real_escape_string($conn, $paymentDate);
-    $paymentMethodEscaped = mysqli_real_escape_string($conn, $paymentMethod);
-    $transactionCodeEscaped = $transactionCode ? mysqli_real_escape_string($conn, $transactionCode) : 'NULL';
-    $notesEscaped = mysqli_real_escape_string($conn, $notes ? $notes : '');
-    
-    // Insert payment - status mặc định là 'pending' (chờ Manager xác nhận)
-    $sql = "INSERT INTO payments (
-                invoice_id, contract_id, payment_type, student_id, payment_code, amount, payment_date, 
-                payment_method, transaction_code, status, confirmed_by, notes, confirmed_at
-            ) VALUES (
-                " . intval($invoiceId) . ", 
-                NULL, 
-                'invoice_payment', 
-                " . intval($studentId) . ", 
-                '" . $paymentCodeEscaped . "', 
-                " . floatval($amount) . ", 
-                '" . $paymentDateEscaped . "', 
-                '" . $paymentMethodEscaped . "', 
-                " . ($transactionCodeEscaped !== 'NULL' ? "'" . $transactionCodeEscaped . "'" : 'NULL') . ",
-                'pending', 
-                NULL, 
-                '" . $notesEscaped . "', 
-                NULL
-            )";
-    
-    $result = mysqli_query($conn, $sql);
-    
-    if (!$result) {
-        $error = mysqli_error($conn);
+    try {
+        // Tạo mã thanh toán
+        $paymentCode = generatePaymentCode('invoice_payment');
+        
+        // Escape các giá trị
+        $paymentCodeEscaped = mysqli_real_escape_string($conn, $paymentCode);
+        $paymentDateEscaped = mysqli_real_escape_string($conn, $paymentDate);
+        $paymentMethodEscaped = mysqli_real_escape_string($conn, $paymentMethod);
+        $transactionCodeEscaped = $transactionCode ? mysqli_real_escape_string($conn, $transactionCode) : 'NULL';
+        $notesEscaped = mysqli_real_escape_string($conn, $notes ? $notes : '');
+        
+        // Nếu autoConfirm = true, tự động xác nhận (status = 'confirmed', confirmed_at = NOW())
+        // Nếu autoConfirm = false, chờ manager xác nhận (status = 'pending')
+        $status = $autoConfirm ? 'confirmed' : 'pending';
+        $confirmedAt = $autoConfirm ? date('Y-m-d H:i:s') : null;
+        $confirmedAtSql = $confirmedAt ? "'" . mysqli_real_escape_string($conn, $confirmedAt) . "'" : 'NULL';
+        
+        // Insert payment
+        $sql = "INSERT INTO payments (
+                    invoice_id, contract_id, payment_type, student_id, payment_code, amount, payment_date, 
+                    payment_method, transaction_code, status, confirmed_by, notes, confirmed_at
+                ) VALUES (
+                    " . intval($invoiceId) . ", 
+                    NULL, 
+                    'invoice_payment', 
+                    " . intval($studentId) . ", 
+                    '" . $paymentCodeEscaped . "', 
+                    " . floatval($amount) . ", 
+                    '" . $paymentDateEscaped . "', 
+                    '" . $paymentMethodEscaped . "', 
+                    " . ($transactionCodeEscaped !== 'NULL' ? "'" . $transactionCodeEscaped . "'" : 'NULL') . ",
+                    '" . $status . "', 
+                    NULL, 
+                    '" . $notesEscaped . "', 
+                    " . $confirmedAtSql . "
+                )";
+        
+        $result = mysqli_query($conn, $sql);
+        
+        if (!$result) {
+            throw new Exception('Lỗi tạo payment: ' . mysqli_error($conn));
+        }
+        
+        $paymentId = mysqli_insert_id($conn);
+        
+        // Nếu autoConfirm = true, tự động cập nhật trạng thái hóa đơn
+        if ($autoConfirm) {
+            // Tính tổng số tiền đã thanh toán (bao gồm payment vừa tạo)
+            $sqlCheckTotal = "SELECT SUM(amount) as total_paid 
+                             FROM payments 
+                             WHERE invoice_id = ? 
+                             AND status = 'confirmed' 
+                             AND payment_type = 'invoice_payment'";
+            $stmtCheckTotal = mysqli_prepare($conn, $sqlCheckTotal);
+            
+            if ($stmtCheckTotal) {
+                mysqli_stmt_bind_param($stmtCheckTotal, "i", $invoiceId);
+                mysqli_stmt_execute($stmtCheckTotal);
+                $resultCheckTotal = mysqli_stmt_get_result($stmtCheckTotal);
+                
+                $totalPaid = 0;
+                if ($resultCheckTotal && mysqli_num_rows($resultCheckTotal) > 0) {
+                    $rowTotal = mysqli_fetch_assoc($resultCheckTotal);
+                    $totalPaid = floatval($rowTotal['total_paid'] ?? 0);
+                }
+                
+                mysqli_stmt_close($stmtCheckTotal);
+                
+                $invoiceTotal = floatval($invoice['total_amount']);
+                
+                // Nếu đã thanh toán đủ hoặc vượt quá, cập nhật status hóa đơn thành 'paid'
+                if ($totalPaid >= $invoiceTotal) {
+                    $sqlUpdateInvoice = "UPDATE invoices 
+                                        SET status = 'paid', 
+                                            paid_at = NOW() 
+                                        WHERE id = ?";
+                    $stmtUpdateInvoice = mysqli_prepare($conn, $sqlUpdateInvoice);
+                    
+                    if ($stmtUpdateInvoice) {
+                        mysqli_stmt_bind_param($stmtUpdateInvoice, "i", $invoiceId);
+                        if (!mysqli_stmt_execute($stmtUpdateInvoice)) {
+                            throw new Exception('Lỗi cập nhật hóa đơn: ' . mysqli_error($conn));
+                        }
+                        mysqli_stmt_close($stmtUpdateInvoice);
+                    }
+                }
+            }
+        }
+        
+        // Commit transaction
+        mysqli_commit($conn);
         mysqli_close($conn);
-        return ['success' => false, 'message' => 'Lỗi tạo payment: ' . $error];
+        
+        if ($autoConfirm) {
+            return ['success' => true, 'message' => 'Thanh toán thành công! Hóa đơn đã được cập nhật.', 'id' => $paymentId];
+        } else {
+            return ['success' => true, 'message' => 'Tạo payment thành công! Vui lòng chờ Manager xác nhận.', 'id' => $paymentId];
+        }
+        
+    } catch (Exception $e) {
+        // Rollback transaction
+        mysqli_rollback($conn);
+        mysqli_close($conn);
+        return ['success' => false, 'message' => $e->getMessage()];
     }
-    
-    $paymentId = mysqli_insert_id($conn);
-    mysqli_close($conn);
-    return ['success' => true, 'message' => 'Tạo payment thành công! Vui lòng chờ Manager xác nhận.', 'id' => $paymentId];
 }
 
 /**

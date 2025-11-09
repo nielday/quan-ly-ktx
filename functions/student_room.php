@@ -7,6 +7,7 @@
 require_once __DIR__ . '/db_connection.php';
 require_once __DIR__ . '/room_assignments.php';
 require_once __DIR__ . '/rooms.php';
+require_once __DIR__ . '/room_services.php';
 
 /**
  * Lấy thông tin phòng đang ở và bạn cùng phòng của sinh viên
@@ -50,41 +51,4 @@ function getStudentRoomInfo($studentId) {
     ];
 }
 
-/**
- * Lấy dịch vụ của phòng
- * @param int $roomId
- * @return array
- */
-function getRoomServices($roomId) {
-    $conn = getDbConnection();
-    $services = [];
-    
-    $sql = "SELECT rs.*, 
-                   s.service_code, s.service_name, s.description, s.price, s.unit
-            FROM room_services rs
-            INNER JOIN services s ON rs.service_id = s.id
-            WHERE rs.room_id = ? 
-            AND rs.status = 'active'
-            AND (rs.end_date IS NULL OR rs.end_date >= CURDATE())
-            ORDER BY s.service_name ASC";
-    
-    $stmt = mysqli_prepare($conn, $sql);
-    
-    if ($stmt) {
-        mysqli_stmt_bind_param($stmt, "i", $roomId);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        
-        if ($result && mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-                $services[] = $row;
-            }
-        }
-        
-        mysqli_stmt_close($stmt);
-    }
-    
-    mysqli_close($conn);
-    return $services;
-}
 
