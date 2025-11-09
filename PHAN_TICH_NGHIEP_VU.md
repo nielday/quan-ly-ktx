@@ -88,13 +88,7 @@ Xây dựng hệ thống quản lý ký túc xá đơn giản cho môi trường
 - **Reset mật khẩu** khi cần
 - **Khóa/Mở khóa** tài khoản
 
-#### B. Quản lý hệ thống
-- **Cấu hình hệ thống**: cài đặt cơ bản của website
-- **Backup/Restore database**
-- **Xem log hệ thống**
-- **Lưu ý**: Admin KHÔNG quản lý giá phòng, đơn giá điện/nước, phí dịch vụ - những thứ này do Manager quản lý
-
-#### C. Báo cáo & Thống kê
+#### B. Báo cáo & Thống kê
 - **Báo cáo tổng hợp**: tổng số phòng, sinh viên, doanh thu
 - **Thống kê đơn giản**: xem số liệu cơ bản
 
@@ -716,10 +710,6 @@ Xây dựng hệ thống quản lý ký túc xá đơn giản cho môi trường
 - **users/create_user.php**: Tạo tài khoản mới
 - **users/edit_user.php**: Sửa thông tin tài khoản
 - **users/delete_user.php**: Xóa tài khoản
-
-#### Cấu hình hệ thống
-- **settings.php**: Cài đặt hệ thống
-- **backup.php**: Backup/Restore database
 
 #### Báo cáo
 - **reports.php**: Báo cáo tổng hợp

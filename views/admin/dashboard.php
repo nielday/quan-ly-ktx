@@ -121,7 +121,7 @@ require_once __DIR__ . '/../../functions/helpers.php';
 
         <!-- Quick Actions -->
         <div class="row mb-4">
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
                 <div class="card text-white bg-primary h-100">
                     <div class="card-body">
                         <h5 class="card-title"><i class="bi bi-people me-2"></i>Quản lý tài khoản</h5>
@@ -132,24 +132,13 @@ require_once __DIR__ . '/../../functions/helpers.php';
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
                 <div class="card text-white bg-success h-100">
                     <div class="card-body">
                         <h5 class="card-title"><i class="bi bi-bar-chart me-2"></i>Báo cáo tổng hợp</h5>
                         <p class="card-text">Xem báo cáo tổng hợp về hệ thống</p>
                         <a href="reports.php" class="btn btn-light btn-sm">
                             <i class="bi bi-arrow-right me-1"></i>Xem chi tiết
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-3">
-                <div class="card text-white bg-info h-100">
-                    <div class="card-body">
-                        <h5 class="card-title"><i class="bi bi-gear me-2"></i>Cấu hình hệ thống</h5>
-                        <p class="card-text">Cài đặt hệ thống (sắp có)</p>
-                        <a href="#" class="btn btn-light btn-sm disabled">
-                            <i class="bi bi-arrow-right me-1"></i>Sắp có
                         </a>
                     </div>
                 </div>
