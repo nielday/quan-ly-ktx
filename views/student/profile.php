@@ -76,6 +76,11 @@ $errorMsg = getErrorMessage();
                             </div>
                         <?php endif; ?>
                         
+                        <div class="alert alert-info mb-4">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Hướng dẫn:</strong> Vui lòng điền đầy đủ thông tin cá nhân. Các trường có dấu <span class="text-danger">*</span> là bắt buộc. Thông tin sẽ được sử dụng để quản lý và liên hệ với bạn.
+                        </div>
+                        
                         <form method="POST" action="../../handle/students_process.php">
                             <input type="hidden" name="action" value="update">
                             <input type="hidden" name="id" value="<?php echo $student['id']; ?>">
@@ -90,7 +95,11 @@ $errorMsg = getErrorMessage();
                                        name="student_code" 
                                        value="<?php echo escapeHtml($student['student_code']); ?>"
                                        required
-                                       maxlength="20">
+                                       maxlength="20"
+                                       readonly>
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle me-1"></i>Mã sinh viên đã được hệ thống cấp, không thể thay đổi.
+                                </small>
                             </div>
 
                             <div class="mb-3">
@@ -103,7 +112,11 @@ $errorMsg = getErrorMessage();
                                        name="full_name" 
                                        value="<?php echo escapeHtml($student['full_name']); ?>"
                                        required
-                                       maxlength="100">
+                                       maxlength="100"
+                                       placeholder="Ví dụ: Nguyễn Văn A">
+                                <small class="text-muted">
+                                    <i class="bi bi-person-badge me-1"></i>Nhập đầy đủ họ và tên của bạn (không dấu hoặc có dấu đều được)
+                                </small>
                             </div>
 
                             <div class="row">
@@ -114,6 +127,9 @@ $errorMsg = getErrorMessage();
                                            id="date_of_birth" 
                                            name="date_of_birth" 
                                            value="<?php echo $student['date_of_birth'] ? $student['date_of_birth'] : ''; ?>">
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar me-1"></i>Chọn ngày sinh của bạn (định dạng: DD/MM/YYYY)
+                                    </small>
                                 </div>
 
                                 <div class="col-md-6 mb-3">
@@ -126,6 +142,9 @@ $errorMsg = getErrorMessage();
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
+                                    <small class="text-muted">
+                                        <i class="bi bi-person me-1"></i>Chọn giới tính của bạn
+                                    </small>
                                 </div>
                             </div>
 
@@ -137,7 +156,12 @@ $errorMsg = getErrorMessage();
                                            id="phone" 
                                            name="phone" 
                                            value="<?php echo escapeHtml($student['phone'] ?? ''); ?>"
-                                           maxlength="20">
+                                           maxlength="20"
+                                           pattern="[0-9]{10,11}"
+                                           placeholder="Ví dụ: 0123456789">
+                                    <small class="text-muted">
+                                        <i class="bi bi-telephone me-1"></i>Số điện thoại để liên hệ (10-11 chữ số, chỉ nhập số)
+                                    </small>
                                 </div>
 
                                 <div class="col-md-6 mb-3">
@@ -147,7 +171,11 @@ $errorMsg = getErrorMessage();
                                            id="email" 
                                            name="email" 
                                            value="<?php echo escapeHtml($student['email'] ?? ''); ?>"
-                                           maxlength="100">
+                                           maxlength="100"
+                                           placeholder="Ví dụ: sinhvien@example.com">
+                                    <small class="text-muted">
+                                        <i class="bi bi-envelope me-1"></i>Email để nhận thông báo từ hệ thống
+                                    </small>
                                 </div>
                             </div>
 
@@ -156,7 +184,11 @@ $errorMsg = getErrorMessage();
                                 <textarea class="form-control" 
                                           id="address" 
                                           name="address" 
-                                          rows="2"><?php echo escapeHtml($student['address'] ?? ''); ?></textarea>
+                                          rows="2"
+                                          placeholder="Ví dụ: Số nhà, Tên đường, Phường/Xã, Quận/Huyện, Tỉnh/Thành phố"><?php echo escapeHtml($student['address'] ?? ''); ?></textarea>
+                                <small class="text-muted">
+                                    <i class="bi bi-geo-alt me-1"></i>Địa chỉ thường trú hoặc địa chỉ liên hệ (đầy đủ: số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố)
+                                </small>
                             </div>
 
                             <div class="row">
@@ -167,7 +199,11 @@ $errorMsg = getErrorMessage();
                                            id="university" 
                                            name="university" 
                                            value="<?php echo escapeHtml($student['university'] ?? ''); ?>"
-                                           maxlength="200">
+                                           maxlength="200"
+                                           placeholder="Ví dụ: Đại học Bách Khoa Hà Nội">
+                                    <small class="text-muted">
+                                        <i class="bi bi-building me-1"></i>Tên trường đại học bạn đang theo học
+                                    </small>
                                 </div>
 
                                 <div class="col-md-6 mb-3">
@@ -177,7 +213,11 @@ $errorMsg = getErrorMessage();
                                            id="major" 
                                            name="major" 
                                            value="<?php echo escapeHtml($student['major'] ?? ''); ?>"
-                                           maxlength="100">
+                                           maxlength="100"
+                                           placeholder="Ví dụ: Công nghệ Thông tin">
+                                    <small class="text-muted">
+                                        <i class="bi bi-book me-1"></i>Ngành/chuyên ngành bạn đang học
+                                    </small>
                                 </div>
                             </div>
 
@@ -189,7 +229,11 @@ $errorMsg = getErrorMessage();
                                            id="year" 
                                            name="year" 
                                            value="<?php echo escapeHtml($student['year'] ?? ''); ?>"
-                                           maxlength="20">
+                                           maxlength="20"
+                                           placeholder="Ví dụ: K64, 2024, K2024">
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar-check me-1"></i>Khóa học bạn đang theo học (ví dụ: K64, 2024)
+                                    </small>
                                 </div>
 
                                 <div class="col-md-6 mb-3">
@@ -199,7 +243,12 @@ $errorMsg = getErrorMessage();
                                            id="id_card" 
                                            name="id_card" 
                                            value="<?php echo escapeHtml($student['id_card'] ?? ''); ?>"
-                                           maxlength="20">
+                                           maxlength="20"
+                                           pattern="[0-9]{9,12}"
+                                           placeholder="Ví dụ: 001234567890">
+                                    <small class="text-muted">
+                                        <i class="bi bi-card-text me-1"></i>Số Căn cước công dân (12 chữ số) hoặc Chứng minh nhân dân (9 chữ số), chỉ nhập số
+                                    </small>
                                 </div>
                             </div>
 

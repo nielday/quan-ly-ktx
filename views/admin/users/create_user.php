@@ -130,13 +130,16 @@ $errorMsg = getErrorMessage();
                                 </select>
                             </div>
                             
-                            <div class="alert alert-info">
+                            <div class="alert alert-info" id="infoAlert">
                                 <i class="bi bi-info-circle me-2"></i>
                                 <strong>Lưu ý:</strong>
-                                <ul class="mb-0">
+                                <ul class="mb-0" id="infoList">
                                     <li>Username phải là duy nhất và không được trùng với tài khoản khác</li>
                                     <li>Mật khẩu tối thiểu 6 ký tự</li>
                                     <li>Email và điện thoại là tùy chọn</li>
+                                    <li id="studentNote" style="display: none;">
+                                        <strong>Khi chọn vai trò "Sinh viên":</strong> Hệ thống sẽ tự động tạo record trong bảng students với mã sinh viên tự động (format: SV001, SV002, SV003...). Mã sẽ tự động tăng dựa trên mã sinh viên lớn nhất hiện có. Sinh viên có thể đăng nhập ngay và cập nhật thông tin chi tiết sau.
+                                    </li>
                                 </ul>
                             </div>
                             
@@ -175,6 +178,25 @@ $errorMsg = getErrorMessage();
             
             return true;
         }
+        
+        // Hiển thị/ẩn thông báo cho student
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleSelect = document.getElementById('role');
+            const studentNote = document.getElementById('studentNote');
+            
+            roleSelect.addEventListener('change', function() {
+                if (this.value === 'student') {
+                    studentNote.style.display = 'list-item';
+                } else {
+                    studentNote.style.display = 'none';
+                }
+            });
+            
+            // Kiểm tra giá trị ban đầu
+            if (roleSelect.value === 'student') {
+                studentNote.style.display = 'list-item';
+            }
+        });
     </script>
 </body>
 </html>

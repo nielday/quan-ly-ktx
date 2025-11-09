@@ -125,8 +125,90 @@ function getUserByUsername($username) {
 }
 
 /**
+ * Tạo mã sinh viên tự động
+ * Format: SV + số (ví dụ: SV001, SV002, SV003...)
+ * Logic: Lấy mã sinh viên cuối cùng (số lớn nhất) và tăng lên 1
+ * @param mysqli $conn
+ * @return string
+ */
+function generateStudentCode($conn) {
+    // Lấy tất cả mã sinh viên bắt đầu bằng "SV"
+    $sql = "SELECT student_code FROM students 
+            WHERE student_code LIKE 'SV%'";
+    
+    $result = mysqli_query($conn, $sql);
+    $maxNumber = 0;
+    
+    if ($result && mysqli_num_rows($result) > 0) {
+        // Duyệt qua tất cả mã để tìm số lớn nhất
+        while ($row = mysqli_fetch_assoc($result)) {
+            $code = $row['student_code'];
+            
+            // Lấy phần số sau "SV" (bỏ qua "SV" ở đầu)
+            // Ví dụ: SV002 -> 002, SV2400001 -> 2400001, SV1 -> 1
+            if (preg_match('/^SV(\d+)$/', $code, $matches)) {
+                $number = intval($matches[1]);
+                if ($number > $maxNumber) {
+                    $maxNumber = $number;
+                }
+            }
+        }
+    }
+    
+    // Tăng số lên 1
+    $newNumber = $maxNumber + 1;
+    
+    // Tạo mã mới: SV + số (tối thiểu 3 chữ số, ví dụ: SV001, SV002, SV003...)
+    // Nếu số >= 1000, sẽ không có leading zeros (SV1000, SV1001...)
+    if ($newNumber < 1000) {
+        $studentCode = 'SV' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+    } else {
+        $studentCode = 'SV' . $newNumber;
+    }
+    
+    // Đảm bảo mã không trùng (kiểm tra lại và tăng nếu cần)
+    // Trường hợp này hiếm khi xảy ra nhưng để an toàn
+    $sqlCheck = "SELECT id FROM students WHERE student_code = ? LIMIT 1";
+    $stmtCheck = mysqli_prepare($conn, $sqlCheck);
+    $attempts = 0;
+    $maxAttempts = 100;
+    
+    if ($stmtCheck) {
+        while ($attempts < $maxAttempts) {
+            mysqli_stmt_bind_param($stmtCheck, "s", $studentCode);
+            mysqli_stmt_execute($stmtCheck);
+            $resultCheck = mysqli_stmt_get_result($stmtCheck);
+            
+            if ($resultCheck && mysqli_num_rows($resultCheck) == 0) {
+                // Mã không trùng, có thể sử dụng
+                break;
+            }
+            
+            // Mã trùng (trường hợp rất hiếm), tăng số lên
+            $newNumber++;
+            if ($newNumber < 1000) {
+                $studentCode = 'SV' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+            } else {
+                $studentCode = 'SV' . $newNumber;
+            }
+            $attempts++;
+            
+            // Reset statement để sử dụng lại
+            mysqli_stmt_close($stmtCheck);
+            $stmtCheck = mysqli_prepare($conn, $sqlCheck);
+        }
+        
+        if ($stmtCheck) {
+            mysqli_stmt_close($stmtCheck);
+        }
+    }
+    
+    return $studentCode;
+}
+
+/**
  * Tạo user mới
- * @param array $data ['username', 'password', 'full_name', 'email', 'phone', 'role']
+ * @param array $data ['username', 'password', 'full_name', 'email', 'phone', 'role', 'student_code'?]
  * @return array ['success' => bool, 'message' => string, 'user_id' => int|null]
  */
 function createUser($data) {
@@ -161,39 +243,106 @@ function createUser($data) {
     // Hash password
     $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
     
-    // Insert user
-    $sql = "INSERT INTO users (username, password, full_name, email, phone, role, status) 
-            VALUES (?, ?, ?, ?, ?, ?, 'active')";
+    // Bắt đầu transaction
+    mysqli_begin_transaction($conn);
     
-    $stmt = mysqli_prepare($conn, $sql);
-    
-    if (!$stmt) {
-        mysqli_close($conn);
-        return ['success' => false, 'message' => 'Lỗi chuẩn bị câu lệnh SQL!'];
-    }
-    
-    $email = $data['email'] ?? null;
-    $phone = $data['phone'] ?? null;
-    
-    mysqli_stmt_bind_param($stmt, "ssssss", 
-        $data['username'], 
-        $hashedPassword, 
-        $data['full_name'], 
-        $email, 
-        $phone, 
-        $data['role']
-    );
-    
-    if (mysqli_stmt_execute($stmt)) {
+    try {
+        // Insert user
+        $sql = "INSERT INTO users (username, password, full_name, email, phone, role, status) 
+                VALUES (?, ?, ?, ?, ?, ?, 'active')";
+        
+        $stmt = mysqli_prepare($conn, $sql);
+        
+        if (!$stmt) {
+            throw new Exception('Lỗi chuẩn bị câu lệnh SQL cho users!');
+        }
+        
+        $email = $data['email'] ?? null;
+        $phone = $data['phone'] ?? null;
+        
+        mysqli_stmt_bind_param($stmt, "ssssss", 
+            $data['username'], 
+            $hashedPassword, 
+            $data['full_name'], 
+            $email, 
+            $phone, 
+            $data['role']
+        );
+        
+        if (!mysqli_stmt_execute($stmt)) {
+            throw new Exception('Lỗi tạo user: ' . mysqli_error($conn));
+        }
+        
         $userId = mysqli_insert_id($conn);
         mysqli_stmt_close($stmt);
+        
+        // Nếu role là student, tạo record trong bảng students
+        if ($data['role'] === 'student') {
+            // Lấy student_code từ data hoặc generate tự động
+            if (!empty($data['student_code'])) {
+                // Nếu Admin cung cấp mã, kiểm tra xem có trùng không
+                $studentCode = trim($data['student_code']);
+                $sqlCheck = "SELECT id FROM students WHERE student_code = ? LIMIT 1";
+                $stmtCheck = mysqli_prepare($conn, $sqlCheck);
+                if ($stmtCheck) {
+                    mysqli_stmt_bind_param($stmtCheck, "s", $studentCode);
+                    mysqli_stmt_execute($stmtCheck);
+                    $resultCheck = mysqli_stmt_get_result($stmtCheck);
+                    
+                    if ($resultCheck && mysqli_num_rows($resultCheck) > 0) {
+                        mysqli_stmt_close($stmtCheck);
+                        throw new Exception('Mã sinh viên "' . $studentCode . '" đã tồn tại!');
+                    }
+                    mysqli_stmt_close($stmtCheck);
+                }
+            } else {
+                // Generate tự động (function đã đảm bảo không trùng)
+                $studentCode = generateStudentCode($conn);
+            }
+            
+            // Insert student với thông tin cơ bản
+            // Các thông tin khác (date_of_birth, gender, address, university, major, year, id_card) 
+            // sẽ được sinh viên cập nhật sau khi đăng nhập
+            $sqlStudent = "INSERT INTO students (user_id, student_code, full_name, phone, email, status) 
+                          VALUES (?, ?, ?, ?, ?, 'active')";
+            
+            $stmtStudent = mysqli_prepare($conn, $sqlStudent);
+            
+            if (!$stmtStudent) {
+                throw new Exception('Lỗi chuẩn bị câu lệnh SQL cho students!');
+            }
+            
+            mysqli_stmt_bind_param($stmtStudent, "issss", 
+                $userId,
+                $studentCode,
+                $data['full_name'],
+                $phone,
+                $email
+            );
+            
+            if (!mysqli_stmt_execute($stmtStudent)) {
+                throw new Exception('Lỗi tạo student: ' . mysqli_error($conn));
+            }
+            
+            mysqli_stmt_close($stmtStudent);
+        }
+        
+        // Commit transaction
+        mysqli_commit($conn);
         mysqli_close($conn);
-        return ['success' => true, 'message' => 'Tạo tài khoản thành công!', 'user_id' => $userId];
-    } else {
-        $error = mysqli_error($conn);
-        mysqli_stmt_close($stmt);
+        
+        $message = 'Tạo tài khoản thành công!';
+        if ($data['role'] === 'student') {
+            $message .= ' Sinh viên có thể đăng nhập và cập nhật thông tin chi tiết.';
+        }
+        
+        return ['success' => true, 'message' => $message, 'user_id' => $userId];
+        
+    } catch (Exception $e) {
+        // Rollback transaction
+        mysqli_rollback($conn);
         mysqli_close($conn);
-        return ['success' => false, 'message' => 'Lỗi tạo tài khoản: ' . $error];
+        return ['success' => false, 'message' => $e->getMessage()];
     }
 }
 
