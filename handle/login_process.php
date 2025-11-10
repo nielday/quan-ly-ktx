@@ -21,7 +21,7 @@ function handleLogin() {
     if (empty($username) || empty($password)) {
         setErrorMessage('Vui lòng nhập đầy đủ username và password!');
         mysqli_close($conn);
-        redirect('../index.php');
+        redirect('../login.php');
     }
 
     // Xác thực user
@@ -47,7 +47,7 @@ function handleLogin() {
     // Đăng nhập thất bại
     setErrorMessage('Tên đăng nhập hoặc mật khẩu không đúng!');
     mysqli_close($conn);
-    redirect('../index.php');
+    redirect('../login.php');
 }
 
 ?>

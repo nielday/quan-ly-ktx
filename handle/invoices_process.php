@@ -10,7 +10,7 @@ require_once __DIR__ . '/../functions/helpers.php';
 
 // Kiểm tra đăng nhập và quyền Manager
 if (!isLoggedIn()) {
-    header('Location: ../../index.php');
+    header('Location: ../../login.php');
     exit;
 }
 

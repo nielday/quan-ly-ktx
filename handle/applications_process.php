@@ -14,7 +14,7 @@ $currentUser = getCurrentUser();
 
 // Kiểm tra đăng nhập
 if (!isLoggedIn()) {
-    redirect('../index.php');
+    redirect('../login.php');
 }
 
 switch ($action) {
@@ -97,7 +97,7 @@ function handleApproveApplication() {
     $currentUser = getCurrentUser();
     
     // Chỉ manager mới được duyệt
-    checkRole('manager', '../index.php');
+    checkRole('manager', '../login.php');
     
     $id = intval($_POST['id'] ?? 0);
     
@@ -129,7 +129,7 @@ function handleRejectApplication() {
     $currentUser = getCurrentUser();
     
     // Chỉ manager mới được từ chối
-    checkRole('manager', '../index.php');
+    checkRole('manager', '../login.php');
     
     $id = intval($_POST['id'] ?? 0);
     $rejectionReason = trim($_POST['rejection_reason'] ?? '');

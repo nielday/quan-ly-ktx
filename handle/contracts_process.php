@@ -9,7 +9,7 @@ require_once __DIR__ . '/../functions/helpers.php';
 require_once __DIR__ . '/../functions/contracts.php';
 
 // Kiểm tra đăng nhập và quyền manager
-checkRole('manager', '../index.php');
+checkRole('manager', '../login.php');
 
 $action = getAction();
 

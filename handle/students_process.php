@@ -13,7 +13,7 @@ $currentUser = getCurrentUser();
 
 // Kiểm tra đăng nhập
 if (!isLoggedIn()) {
-    redirect('../index.php');
+    redirect('../login.php');
 }
 
 switch ($action) {

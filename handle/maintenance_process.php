@@ -11,7 +11,7 @@ require_once __DIR__ . '/../functions/maintenance.php';
 
 // Kiểm tra đăng nhập
 if (!isLoggedIn()) {
-    header('Location: ../index.php');
+    header('Location: ../login.php');
     exit;
 }
 
@@ -68,7 +68,7 @@ if ($user['role'] === 'manager') {
     }
 } else {
     setErrorMessage('Bạn không có quyền truy cập!');
-    redirect('../index.php');
+    redirect('../login.php');
 }
 
 /**

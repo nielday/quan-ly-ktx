@@ -10,7 +10,7 @@ require_once __DIR__ . '/../functions/helpers.php';
 
 // Kiểm tra đăng nhập
 if (!isLoggedIn()) {
-    header('Location: ../index.php');
+    header('Location: ../login.php');
     exit;
 }
 
@@ -48,7 +48,7 @@ if ($user['role'] === 'manager') {
     }
 } else {
     $_SESSION['error'] = 'Bạn không có quyền truy cập!';
-    header('Location: ../index.php');
+    header('Location: ../login.php');
     exit;
 }
 

@@ -10,9 +10,9 @@ require_once __DIR__ . '/db_connection.php';
  * Hàm kiểm tra xem user đã đăng nhập chưa
  * Nếu chưa đăng nhập, chuyển hướng về trang login
  * 
- * @param string $redirectPath Đường dẫn để chuyển hướng về trang login (mặc định: '../index.php')
+ * @param string $redirectPath Đường dẫn để chuyển hướng về trang login (mặc định: '../login.php')
  */
-function checkLogin($redirectPath = '../index.php') {
+function checkLogin($redirectPath = '../login.php') {
     startSession();
     
     // Kiểm tra xem user đã đăng nhập chưa
@@ -28,7 +28,7 @@ function checkLogin($redirectPath = '../index.php') {
  * @param array|string $allowedRoles Danh sách role được phép (ví dụ: ['admin', 'manager'] hoặc 'admin')
  * @param string $redirectPath Đường dẫn chuyển hướng nếu không có quyền
  */
-function checkRole($allowedRoles, $redirectPath = '../index.php') {
+function checkRole($allowedRoles, $redirectPath = '../login.php') {
     startSession();
     checkLogin($redirectPath);
     
@@ -50,9 +50,9 @@ function checkRole($allowedRoles, $redirectPath = '../index.php') {
  * Hàm đăng xuất user
  * Xóa tất cả session và chuyển hướng về trang login
  * 
- * @param string $redirectPath Đường dẫn để chuyển hướng sau khi logout (mặc định: '../index.php')
+ * @param string $redirectPath Đường dẫn để chuyển hướng sau khi logout (mặc định: '../login.php')
  */
-function logout($redirectPath = '../index.php') {
+function logout($redirectPath = '../login.php') {
     startSession();
     
     // Hủy tất cả session
@@ -164,7 +164,7 @@ function getDashboardPath($role) {
         case 'student':
             return 'views/student/dashboard.php';
         default:
-            return 'index.php';
+            return 'login.php';
     }
 }
 

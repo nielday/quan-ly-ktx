@@ -45,7 +45,7 @@ try {
 }
 
 echo "<hr>";
-echo "<p><a href='index.php'>← Quay lại trang đăng nhập</a></p>";
+echo "<p><a href='home.php'>← Về trang chủ</a> | <a href='login.php'>Đăng nhập</a></p>";
 
 ?>
 
