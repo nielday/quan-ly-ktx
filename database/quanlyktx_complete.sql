@@ -456,17 +456,17 @@ CREATE TABLE notifications (
 -- 1. CHÈN DỮ LIỆU MẪU CHO BẢNG USERS
 -- ============================================
 
--- Admin (mật khẩu: admin123)
+-- Admin (mật khẩu: admin - đã hash)
 INSERT INTO users (username, password, full_name, email, phone, role, status) VALUES
-('admin', 'admin123', 'Quản trị viên', 'admin@ktx.edu.vn', '0123456789', 'admin', 'active');
+('admin', '$2y$10$AU2pFGE87ifWBKuBLxqafeCPAPgnl.0eZFyhlDCfRilUtXMwZn5Xm', 'Quản trị viên', 'admin@ktx.edu.vn', '0123456789', 'admin', 'active');
 
--- Manager (mật khẩu: manager123)
+-- Manager (mật khẩu: manager - đã hash)
 INSERT INTO users (username, password, full_name, email, phone, role, status) VALUES
-('manager', 'manager123', 'Quản lý KTX', 'manager@ktx.edu.vn', '0987654321', 'manager', 'active');
+('manager', '$2y$10$mg2M/fdzPmng9tY2a95ujO/jUT5XS7Qs2pkPO.F0zhecoY.5Y/hhO', 'Quản lý KTX', 'manager@ktx.edu.vn', '0987654321', 'manager', 'active');
 
--- Student (mật khẩu: student123)
+-- Student (mật khẩu: student - đã hash)
 INSERT INTO users (username, password, full_name, email, phone, role, status) VALUES
-('student', 'student123', 'Sinh viên Test', 'student@ktx.edu.vn', '0912345678', 'student', 'active');
+('student', '$2y$10$lR9VdmSRXWyvJXEP55ko0u/rqaKwUng3KbrI/kFWjpDN7bpawTQ9u', 'Sinh viên Test', 'student@ktx.edu.vn', '0912345678', 'student', 'active');
 
 -- ============================================
 -- 2. CHÈN DỮ LIỆU MẪU CHO BẢNG STUDENTS

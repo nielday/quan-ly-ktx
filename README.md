@@ -122,14 +122,17 @@ quanlyktx/
 ### 5.4. Setup database
 1. Mở **phpMyAdmin**: http://localhost/phpmyadmin
 2. Import file SQL:
-   - Chọn database `quanlyktx` (hoặc tạo mới)
-   - Import file `database/quanlyktx_complete.sql`
-   - Hoặc chạy file SQL để tạo database và các bảng
+   - File `database/quanlyktx_complete.sql` đã bao gồm:
+     - Tạo database `quanlyktx`
+     - Tạo tất cả 18 bảng với cấu trúc đầy đủ
+     - Chèn dữ liệu mẫu (users, buildings, rooms, pricing, services)
+     - Mật khẩu đã được hash bảo mật
+   - Chỉ cần import 1 file duy nhất: `database/quanlyktx_complete.sql`
 
 3. Database sẽ bao gồm các bảng:
    - users, buildings, rooms, pricing, registration_periods
    - students, applications, contracts, room_assignments
-   - invoices, payments, services, room_services
+   - invoices, payments (với hỗ trợ tiền đặt cọc), services, room_services
    - violations, maintenance_requests, room_transfer_requests
    - notifications
 
@@ -169,30 +172,31 @@ function getDbConnection() {
    - Trang đăng nhập: http://localhost:8000/login.php
 
 ### 5.7. Tài khoản mẫu
-Sau khi import database, có thể sử dụng các tài khoản mẫu:
+Sau khi import database `quanlyktx_complete.sql`, có thể sử dụng các tài khoản mẫu:
 
 **Admin:**
 - Username: `admin`
-- Password: `admin123`
+- Password: `admin`
 
 **Manager:**
 - Username: `manager`
-- Password: `manager123`
+- Password: `manager`
 
 **Student:**
 - Username: `student`
-- Password: `student123`
+- Password: `student`
 
-**Lưu ý**: Đảm bảo đã import file `database/seed_data.sql` để có dữ liệu mẫu.
+**Lưu ý**: 
+- Tất cả mật khẩu đã được hash bảo mật trong database
+- File `quanlyktx_complete.sql` đã bao gồm đầy đủ dữ liệu mẫu, không cần import thêm file nào khác
 
 ## 📋 6. Cấu trúc dự án
 
 ```
 quanlyktx/
 ├── database/              # Script SQL
-│   ├── quanlyktx_complete.sql  # Database hoàn chỉnh
-│   ├── migration_add_deposit_support.sql
-│   └── seed_data.sql      # Dữ liệu mẫu
+│   ├── quanlyktx_complete.sql  # Database hoàn chỉnh (đã gộp tất cả)
+│   └── migration_add_deposit_support.sql  # Migration file (đã tích hợp vào complete)
 ├── functions/            # Business logic layer
 │   ├── db_connection.php # Kết nối database
 │   ├── auth.php          # Authentication
@@ -228,7 +232,7 @@ quanlyktx/
 - ✅ **HTML escaping**: Bảo vệ chống XSS
 - ✅ **Session-based authentication**: Quản lý đăng nhập an toàn
 - ✅ **Role-based access control**: Phân quyền theo role
-- ✅ **Password hashing**: Hỗ trợ password hash (có thể nâng cấp)
+- ✅ **Password hashing**: Mật khẩu được hash bằng bcrypt (PASSWORD_DEFAULT) - Đã tích hợp đầy đủ
 
 ## 📝 8. Luồng xử lý
 
