@@ -81,7 +81,7 @@ Hệ thống quản lý KTX hiện đại, tối ưu hóa trải nghiệm sinh v
 - **Quản lý đơn giá**: Lưu lịch sử thay đổi đơn giá theo thời gian
 - **Quản lý dịch vụ**: Gán dịch vụ cho phòng, tự động tính vào hóa đơn
 
-## 🚀 4. Hình ảnh các chức năng
+## 🚀 4. Hình ảnh web
 
 ### 4.1. Trang chủ
 <div align="center">
