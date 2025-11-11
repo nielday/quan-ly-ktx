@@ -82,7 +82,35 @@ Hệ thống quản lý KTX hiện đại, tối ưu hóa trải nghiệm sinh v
 - **Quản lý dịch vụ**: Gán dịch vụ cho phòng, tự động tính vào hóa đơn
 
 ## 🚀 4. Hình ảnh các chức năng
-_(Hình ảnh sẽ được thêm sau)_
+
+### 4.1. Trang chủ
+<div align="center">
+    <img src="image/ảnh web/ảnh-trang-chủ.png" alt="Trang chủ" width="800"/>
+</div>
+
+### 4.2. Giao diện đăng nhập
+<div align="center">
+    <img src="image/ảnh web/giao-dien-dang-nhap.png" alt="Giao diện đăng nhập" width="800"/>
+</div>
+
+### 4.3. Giao diện Admin
+<div align="center">
+    <img src="image/ảnh web/giao diện admin.png" alt="Giao diện Admin" width="800"/>
+</div>
+
+### 4.4. Giao diện Manager
+<div align="center">
+    <img src="image/ảnh web/giao diện manager.png" alt="Giao diện Manager" width="800"/>
+    <br/>
+    <img src="image/ảnh web/giao diện manager bao gồm sidebar điều hướng.png" alt="Giao diện Manager với Sidebar" width="800"/>
+</div>
+
+### 4.5. Giao diện Student
+<div align="center">
+    <img src="image/ảnh web/giao diện student.png" alt="Giao diện Student" width="800"/>
+    <br/>
+    <img src="image/ảnh web/giao diện student bao gồm sidebar điều hướng.png" alt="Giao diện Student với Sidebar" width="800"/>
+</div>
 
 ## ⚙️ 5. Cài đặt
 
