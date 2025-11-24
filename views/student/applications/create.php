@@ -21,10 +21,26 @@ if (!$student) {
     redirect('../dashboard.php');
 }
 
-// Lấy đợt đăng ký đang mở
-$openPeriod = getOpenRegistrationPeriod();
+// Lấy TẤT CẢ đợt đăng ký đang mở (cho phép sinh viên chọn)
+$openPeriods = getAllOpenRegistrationPeriods();
 $roomTypes = getRoomTypes();
 $errorMsg = getErrorMessage();
+
+// Lấy đợt đăng ký được chọn từ GET (nếu có)
+$selectedPeriodId = $_GET['period_id'] ?? null;
+$selectedPeriod = null;
+if ($selectedPeriodId) {
+    foreach ($openPeriods as $period) {
+        if ($period['id'] == $selectedPeriodId) {
+            $selectedPeriod = $period;
+            break;
+        }
+    }
+}
+// Nếu không có period_id trong GET, lấy đợt đầu tiên (nếu có)
+if (!$selectedPeriod && !empty($openPeriods)) {
+    $selectedPeriod = $openPeriods[0];
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -65,7 +81,7 @@ $errorMsg = getErrorMessage();
                         </h5>
                     </div>
                     <div class="card-body">
-                        <?php if (!$openPeriod): ?>
+                        <?php if (empty($openPeriods)): ?>
                             <div class="alert alert-warning">
                                 <i class="bi bi-exclamation-triangle me-2"></i>Hiện tại không có đợt đăng ký nào đang mở. Vui lòng chờ đợt đăng ký tiếp theo.
                             </div>
@@ -80,14 +96,50 @@ $errorMsg = getErrorMessage();
                                 </div>
                             <?php endif; ?>
                             
-                            <div class="alert alert-info">
-                                <strong>Đợt đăng ký:</strong> <?php echo escapeHtml($openPeriod['period_name']); ?><br>
-                                <small>Thời gian: <?php echo formatDate($openPeriod['start_date']); ?> - <?php echo formatDate($openPeriod['end_date']); ?></small>
-                            </div>
-                            
                             <form method="POST" action="../../../handle/applications_process.php">
                                 <input type="hidden" name="action" value="create">
-                                <input type="hidden" name="registration_period_id" value="<?php echo $openPeriod['id']; ?>">
+                                
+                                <!-- Chọn đợt đăng ký -->
+                                <div class="mb-3">
+                                    <label for="registration_period_id" class="form-label">
+                                        Chọn đợt đăng ký <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select" id="registration_period_id" name="registration_period_id" required onchange="updatePeriodInfo(this.value)">
+                                        <option value="">-- Chọn đợt đăng ký --</option>
+                                        <?php foreach ($openPeriods as $period): ?>
+                                            <option value="<?php echo $period['id']; ?>" 
+                                                    data-name="<?php echo escapeHtml($period['period_name']); ?>"
+                                                    data-start="<?php echo $period['start_date']; ?>"
+                                                    data-end="<?php echo $period['end_date']; ?>"
+                                                    data-semester="<?php echo escapeHtml($period['semester'] ?? ''); ?>"
+                                                    data-year="<?php echo escapeHtml($period['academic_year'] ?? ''); ?>"
+                                                    <?php echo ($selectedPeriod && $selectedPeriod['id'] == $period['id']) ? 'selected' : ''; ?>>
+                                                <?php echo escapeHtml($period['period_name']); ?> 
+                                                (<?php echo formatDate($period['start_date']); ?> - <?php echo formatDate($period['end_date']); ?>)
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <?php if (count($openPeriods) > 0): ?>
+                                        <div class="form-text">
+                                            Có <?php echo count($openPeriods); ?> đợt đăng ký đang mở và chưa hết hạn. 
+                                            <?php if (count($openPeriods) > 1): ?>
+                                                Vui lòng chọn đợt bạn muốn đăng ký.
+                                            <?php else: ?>
+                                                Vui lòng chọn đợt đăng ký.
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <!-- Hiển thị thông tin đợt đăng ký được chọn -->
+                                <?php if (!empty($openPeriods) && $selectedPeriod): ?>
+                                    <div class="mb-3" id="period-info" style="display: none;">
+                                        <div class="alert alert-info">
+                                            <strong>Đợt đăng ký đã chọn:</strong> <span id="period-name"></span><br>
+                                            <small>Thời gian: <span id="period-dates"></span></small>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
                                 
                                 <div class="mb-3">
                                     <label class="form-label">Thông tin sinh viên</label>
@@ -119,7 +171,7 @@ $errorMsg = getErrorMessage();
                                                class="form-control" 
                                                id="semester" 
                                                name="semester" 
-                                               value="<?php echo escapeHtml($openPeriod['semester'] ?? ''); ?>"
+                                               value="<?php echo $selectedPeriod ? escapeHtml($selectedPeriod['semester'] ?? '') : ''; ?>"
                                                placeholder="Ví dụ: Học kỳ 1"
                                                maxlength="20">
                                     </div>
@@ -130,7 +182,7 @@ $errorMsg = getErrorMessage();
                                                class="form-control" 
                                                id="academic_year" 
                                                name="academic_year" 
-                                               value="<?php echo escapeHtml($openPeriod['academic_year'] ?? ''); ?>"
+                                               value="<?php echo $selectedPeriod ? escapeHtml($selectedPeriod['academic_year'] ?? '') : ''; ?>"
                                                placeholder="Ví dụ: 2024-2025"
                                                maxlength="20">
                                     </div>
@@ -166,6 +218,48 @@ $errorMsg = getErrorMessage();
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Cập nhật thông tin đợt đăng ký khi chọn
+        function updatePeriodInfo(periodId) {
+            const select = document.getElementById('registration_period_id');
+            const option = select.options[select.selectedIndex];
+            
+            if (option && option.value) {
+                const periodName = option.getAttribute('data-name');
+                const startDate = option.getAttribute('data-start');
+                const endDate = option.getAttribute('data-end');
+                const semester = option.getAttribute('data-semester');
+                const year = option.getAttribute('data-year');
+                
+                // Cập nhật thông tin hiển thị
+                document.getElementById('period-name').textContent = periodName;
+                document.getElementById('period-dates').textContent = formatDate(startDate) + ' - ' + formatDate(endDate);
+                document.getElementById('period-info').style.display = 'block';
+                
+                // Cập nhật học kỳ và năm học
+                document.getElementById('semester').value = semester || '';
+                document.getElementById('academic_year').value = year || '';
+            } else {
+                document.getElementById('period-info').style.display = 'none';
+            }
+        }
+        
+        // Format date helper
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return day + '/' + month + '/' + year;
+        }
+        
+        // Khởi tạo: hiển thị thông tin đợt đăng ký được chọn ban đầu
+        <?php if (!empty($openPeriods) && $selectedPeriod): ?>
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePeriodInfo(<?php echo $selectedPeriod['id']; ?>);
+        });
+        <?php endif; ?>
+    </script>
 </body>
 </html>
 

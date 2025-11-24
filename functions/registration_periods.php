@@ -50,7 +50,7 @@ function getAllRegistrationPeriods($status = null) {
 }
 
 /**
- * Lấy đợt đăng ký đang mở (open)
+ * Lấy đợt đăng ký đang mở (open) - Lấy 1 đợt đầu tiên (để tương thích với code cũ)
  * @return array|null
  */
 function getOpenRegistrationPeriod() {
@@ -74,6 +74,35 @@ function getOpenRegistrationPeriod() {
     
     mysqli_close($conn);
     return $period;
+}
+
+/**
+ * Lấy TẤT CẢ đợt đăng ký đang mở (open) - Cho phép sinh viên chọn
+ * Chỉ lọc theo status = 'open' và end_date >= CURDATE() (chưa hết hạn)
+ * Không quan trọng năm nào, miễn là đang mở và chưa hết hạn
+ * @return array
+ */
+function getAllOpenRegistrationPeriods() {
+    $conn = getDbConnection();
+    $periods = [];
+    
+    $sql = "SELECT rp.*, u.full_name as created_by_name 
+            FROM registration_periods rp 
+            LEFT JOIN users u ON rp.created_by = u.id 
+            WHERE rp.status = 'open' 
+            AND rp.end_date >= CURDATE()
+            ORDER BY rp.start_date DESC, rp.created_at DESC";
+    
+    $result = mysqli_query($conn, $sql);
+    
+    if ($result && mysqli_num_rows($result) > 0) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $periods[] = $row;
+        }
+    }
+    
+    mysqli_close($conn);
+    return $periods;
 }
 
 /**
